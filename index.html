@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motion Prompt Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f5; --ink:#12151c; --mute:#5b6475; --line:#d9dee7; --card:#fff;
+  --accent:#2f4bff; --accent-ink:#fff;
+  --display:"Bricolage Grotesque",system-ui,sans-serif; --body:"Public Sans",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0f1218; --ink:#eef1f6; --mute:#98a2b5; --line:#262c38; --card:#171b24; --accent:#6b82ff; --accent-ink:#0f1218; color-scheme:dark}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--body);padding:0 20px 80px}
+.wrap{max-width:1120px;margin:0 auto}
+header{padding:56px 0 28px;display:grid;gap:14px;max-width:760px}
+h1{font:800 clamp(38px,6vw,68px)/0.98 var(--display);letter-spacing:-0.03em;margin:0}
+header p{margin:0;color:var(--mute);font-size:18px;max-width:58ch}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 22px}
+.chip{font:500 14px var(--body);color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip small{opacity:.6;margin-left:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:22px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.thumb{aspect-ratio:16/9;position:relative;overflow:hidden}
+.card .body{padding:18px 20px 22px;display:grid;gap:8px;flex:1;align-content:start}
+.fam{font-size:13px;color:var(--mute)}
+.card h2{font:700 24px/1.1 var(--display);letter-spacing:-0.02em;margin:0}
+.card p{margin:0;color:var(--mute);font-size:15px}
+.btn{font:600 15px var(--body);border:0;border-radius:10px;padding:12px 18px;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.card .btn{justify-self:start;margin-top:10px}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* thumbnails drawn in CSS (replace with real preview images/videos later) */
+.t-paper{background:#f3efe4}
+.t-paper i{position:absolute;background:#fff;border-radius:6px;box-shadow:3px 4px 0 rgba(0,0,0,.14)}
+.t-paper .a{left:8%;top:18%;width:42%;height:52%;transform:rotate(-3deg)}
+.t-paper .b{left:44%;top:30%;width:44%;height:50%;background:#ffd24a;transform:rotate(4deg)}
+.t-paper b{position:absolute;left:10%;bottom:10%;font:800 34px var(--display);color:#222;letter-spacing:-0.03em}
+.t-neon{background:#0b0614}
+.t-neon b{position:absolute;inset:0;display:grid;place-items:center;font:800 clamp(30px,5vw,46px) var(--display);color:#fff;text-shadow:0 0 12px #ff3dcb,0 0 34px #7a3dff;letter-spacing:-0.02em}
+.t-neon i{position:absolute;left:12%;right:12%;bottom:22%;height:4px;background:#3df0ff;box-shadow:0 0 14px #3df0ff;border-radius:4px}
+.t-clean{background:linear-gradient(135deg,#f7f9fc,#e5ecff)}
+.t-clean i{position:absolute;background:#fff;border-radius:12px;box-shadow:0 10px 30px rgba(20,40,120,.14)}
+.t-clean .a{left:10%;top:16%;width:46%;height:60%}
+.t-clean .b{left:52%;top:30%;width:38%;height:46%}
+.t-clean u{position:absolute;left:14%;top:26%;width:30%;height:8px;background:#2f4bff;border-radius:6px}
+
+/* modal */
+dialog{border:0;border-radius:18px;padding:0;width:min(720px,94vw);max-height:92vh;background:var(--card);color:var(--ink);box-shadow:0 30px 90px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(10,12,18,.6)}
+.m{padding:26px 28px 24px;display:grid;gap:18px}
+.mh{display:flex;justify-content:space-between;align-items:start;gap:12px}
+.mh h3{font:800 28px/1.1 var(--display);letter-spacing:-0.02em;margin:0}
+.mh p{margin:4px 0 0;color:var(--mute);font-size:14px}
+.x{background:none;border:0;font-size:26px;line-height:1;cursor:pointer;color:var(--mute);padding:4px 8px}
+.seg{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;justify-self:start}
+.seg button{border:0;background:transparent;color:var(--ink);font:500 14px var(--body);padding:9px 14px;border-radius:9px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);box-shadow:0 1px 4px rgba(0,0,0,.18);font-weight:600}
+.hint{color:var(--mute);font-size:14px;margin:0}
+label.l{font-weight:600;font-size:15px}
+textarea{width:100%;font:15px/1.5 var(--body);background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px 14px;resize:vertical}
+.chk{display:flex;gap:10px;align-items:start;font-size:15px}
+.chk input{width:18px;height:18px;margin-top:3px;accent-color:var(--accent)}
+.out{font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace;height:150px}
+.row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.status{font-size:14px;color:var(--mute);min-height:1.4em}
+.status.warn{color:#c2410c}
+@media (prefers-reduced-motion:no-preference){dialog[open]{animation:pop .18s ease-out}@keyframes pop{from{opacity:0;transform:translateY(8px)}}}
+footer{margin-top:60px;color:var(--mute);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="siteName">Motion Prompt Lab</h1>
+    <p>Pick a motion style, add your topic or script, and copy a ready prompt. Paste it into Claude and get a finished animated video.</p>
+  </header>
+
+  <div class="chips" id="chips" role="group" aria-label="Filter styles by family"></div>
+  <div class="grid" id="grid"></div>
+
+  <footer>Built by you. Edit <code>STYLES</code> in index.html to add new styles.</footer>
+</div>
+
+<dialog id="dlg" aria-labelledby="dTitle">
+  <div class="m">
+    <div class="mh">
+      <div><h3 id="dTitle">Make it yours</h3><p id="dSub"></p></div>
+      <button class="x" id="close" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="seg" role="group" aria-label="Audio mode">
+      <button type="button" id="mNo" aria-pressed="true">No voiceover</button>
+      <button type="button" id="mYes" aria-pressed="false">With voiceover</button>
+    </div>
+    <p class="hint" id="modeHint"></p>
+
+    <div style="display:grid;gap:8px">
+      <label class="l" for="topic">Topic or script</label>
+      <textarea id="topic" rows="4" placeholder="Paste your topic, or the full script you will record."></textarea>
+    </div>
+
+    <label class="chk"><input type="checkbox" id="story" checked><span>Storyboard first: Claude sketches every beat as still frames and waits for your OK before building.</span></label>
+
+    <div style="display:grid;gap:8px">
+      <label class="l" for="out">Your prompt</label>
+      <textarea id="out" class="out" readonly></textarea>
+    </div>
+
+    <div class="row">
+      <span class="status" id="status" role="status"></span>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost" id="dl" type="button">Download .txt</button>
+        <button class="btn" id="copy" type="button">Copy prompt</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script>
+/* =====================================================================
+   CONFIG: edit this section to make the site yours
+   ===================================================================== */
+const SITE_NAME = "Motion Prompt Lab";
+
+/* Each style = one card. `reference` is the path to a working reference HTML file
+   (put them in /styles/). If the file is missing, the prompt gets a clear
+   "paste reference here" marker instead. Add your own styles by copying one block. */
+const STYLES = [
+  {
+    id: "paper-cut", name: "Paper Cut", family: "Hand-Made", thumb: "paper",
+    blurb: "Layered paper shapes that slide and tilt over a soft table-top colour.",
+    reference: "styles/paper-cut.html",
+    card: {
+      look: "Cut-paper collage: flat shapes with hard offset shadows, warm paper tones and one bold yellow.",
+      how: "Words land on paper strips, shapes slide in like pieces being placed, one idea per beat.",
+      type: "Heavy grotesque headlines, plain sans for small text.",
+      motion: "Short slides and tiny rotations. No bounce, no shake.",
+      sound: "Paper rustles, soft taps. No chimes, no music beat."
+    }
+  },
+  {
+    id: "neon-type", name: "Neon Type", family: "Kinetic Type", thumb: "neon",
+    blurb: "Big glowing words slamming in on a dark stage, one phrase per beat.",
+    reference: "styles/neon-type.html",
+    card: {
+      look: "Near-black stage, huge condensed type with a neon glow, one cyan underline accent.",
+      how: "Each beat is one short phrase that slams in word by word, then wipes out.",
+      type: "Heavy display caps for the hook, clean sans for support lines.",
+      motion: "Fast scale-ins, hard cuts, subtle camera push on emphasis.",
+      sound: "Low thumps on slams, short ticks, one quiet pad."
+    }
+  },
+  {
+    id: "clean-cards", name: "Clean Cards", family: "Screen and UI", thumb: "clean",
+    blurb: "A calm product-explainer look: white cards, soft shadows, one blue accent.",
+    reference: "styles/clean-cards.html",
+    card: {
+      look: "Cool off-white backdrop, white cards with soft shadows, one cobalt accent, simple code-drawn icons.",
+      how: "A title chip, then one card, table or mock window per beat. Each beat clears before the next.",
+      type: "Rounded grotesque for headlines, quiet sans for labels.",
+      motion: "Fade with a small rise, soft counters, cards that slide together.",
+      sound: "Soft slides for cards, low taps for list items, light keyboard patter."
+    }
+  }
+];
+
+/* The prompt template. Placeholders are filled by buildPrompt(). Rewrite it freely. */
+const TEMPLATE = `I want an animated video in the "{{STYLE_NAME}}" style ({{STYLE_FAMILY}}).
+Below is a complete, working reference animation in this style: its helpers, a synthesized sound kit, its scenes, its sound score and the player page. Treat that file as the ground truth for how this style looks, moves and sounds, and rebuild it around my content.
+
+MY CONTENT
+{{CONTENT}}
+
+{{STORYBOARD}}WHAT TO BUILD
+One self-contained HTML file (an artifact if you can), built on the reference file below:
+- Keep the page, the player (play/pause, scrub, time, sound toggle, loop, Load voiceover) and the helper and sound blocks unchanged.
+- Replace the demo's story: timeline, scenes, on-screen words and the sound score. Reuse the style's helpers.
+- Aim for 15 to 40 seconds unless my content needs more, and set the duration in the timeline.
+- Keep window.seek(t), window.DURATION, window.scoreSound and window.SFX exposed, so the video can be rendered frame by frame.
+
+THE STYLE
+Look: {{LOOK}}
+How it explains: {{HOW}}
+Type: {{TYPE}}
+Motion: {{MOTION}}
+
+RULES THAT KEEP IT IN STYLE
+- Change the story, the words and the props; do not change the medium. Double-check any facts and numbers you show.
+- Every frame is a pure function of t. Use seeded random only, never Math.random.
+- It will be watched on phones: keep headlines large and text legible at 1280x720. Fill the frame.
+- Keep each frame fast, well under 50 ms.
+
+SOUND
+{{SOUND}}
+- Never more than 2 sounds at once, with plenty of air between them.
+- Sync is everything: the sound score reads the same timeline times as the picture.
+
+IF YOU CAN RUN CODE
+Render an MP4: open the file in headless Chrome, call window.seek(i / 30) for every frame, capture the canvas and pipe the frames into ffmpeg. Render the effects with SFX.render(window.scoreSound, window.DURATION, 48000, { voiceover: {{VO_FLAG}} }) and mux them in.{{VO_NOTE}}
+
+REFERENCE SOURCE (the complete working file)
+{{REFERENCE}}`;
+
+const STORYBOARD_TEXT = `STORYBOARD FIRST
+Before building, show me a storyboard and wait for my OK:
+- One HTML page (an artifact if you can) with a grid of 6 to 10 panels, one per beat. Draw each panel on a canvas with the reference's own helpers so the stills already look like the finished piece. No animation or sound yet.
+- Under each panel: the beat number, its start and end time, the exact on-screen words, the camera move or emphasis, how it gets there from the previous beat, and its key sounds.
+- Below the grid, list any facts or numbers you had to assume.
+When I approve it (or after my changes), build the full animation and reuse the storyboard's drawing code.
+
+`;
+
+/* =====================================================================
+   APP
+   ===================================================================== */
+const $ = (s) => document.querySelector(s);
+document.title = SITE_NAME; $('#siteName').textContent = SITE_NAME;
+
+let family = "All", cur = null, voice = false, refCache = {};
+
+function thumbHTML(k){
+  if(k==="paper") return '<div class="thumb t-paper"><i class="a"></i><i class="b"></i><b>Paper</b></div>';
+  if(k==="neon")  return '<div class="thumb t-neon"><b>NEON TYPE</b><i></i></div>';
+  return '<div class="thumb t-clean"><i class="a"></i><i class="b"></i><u></u></div>';
+}
+function renderChips(){
+  const fams = ["All", ...new Set(STYLES.map(s => s.family))];
+  $('#chips').innerHTML = fams.map(f => {
+    const n = f === "All" ? STYLES.length : STYLES.filter(s => s.family === f).length;
+    return `<button class="chip" type="button" data-f="${f}" aria-pressed="${f===family}">${f}<small>${n}</small></button>`;
+  }).join('');
+}
+function renderGrid(){
+  const list = STYLES.filter(s => family === "All" || s.family === family);
+  $('#grid').innerHTML = list.map(s => `
+    <article class="card">${thumbHTML(s.thumb)}
+      <div class="body"><span class="fam">${s.family}</span><h2>${s.name}</h2><p>${s.blurb}</p>
+      <button class="btn" type="button" data-id="${s.id}">Get the prompt</button></div>
+    </article>`).join('');
+}
+$('#chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if(!b) return; family = b.dataset.f; renderChips(); renderGrid(); });
+$('#grid').addEventListener('click', e => { const b = e.target.closest('[data-id]'); if(!b) return; openDlg(STYLES.find(s => s.id === b.dataset.id)); });
+
+function setVoice(v){
+  voice = v;
+  $('#mNo').setAttribute('aria-pressed', !v); $('#mYes').setAttribute('aria-pressed', v);
+  $('#modeHint').textContent = v
+    ? "Use this when you will add your own narration. Effects sit lower so your voice stays clear."
+    : "A standalone video with the full mix: effects and a quiet bed, no narration.";
+  refresh();
+}
+$('#mNo').onclick = () => setVoice(false); $('#mYes').onclick = () => setVoice(true);
+
+async function loadRef(s){
+  if(refCache[s.id] !== undefined) return refCache[s.id];
+  try{
+    const r = await fetch(s.reference); if(!r.ok) throw 0;
+    refCache[s.id] = await r.text();
+  }catch(e){ refCache[s.id] = null; }
+  return refCache[s.id];
+}
+function buildPrompt(s, ref){
+  const content = $('#topic').value.trim() || "(write your topic or script here)";
+  const vo = voice;
+  const sound = vo
+    ? "- Quiet and tactile, built to sit under a real voice.\n" + s.card.sound + "\n- Keep effects light; no music bed that competes with narration."
+    : "- " + s.card.sound + "\n- Full mix with no voiceover: keep any bed very quiet.";
+  const map = {
+    STYLE_NAME: s.name, STYLE_FAMILY: s.family, CONTENT: content,
+    STORYBOARD: $('#story').checked ? STORYBOARD_TEXT : "",
+    LOOK: s.card.look, HOW: s.card.how, TYPE: s.card.type, MOTION: s.card.motion, SOUND: sound,
+    VO_FLAG: vo ? "true" : "false",
+    VO_NOTE: vo ? " With a voiceover, mix the effects under my audio file and time every beat to it." : "",
+    REFERENCE: ref ? "```html\n" + ref + "\n```" : "[PASTE THE REFERENCE HTML FOR THIS STYLE HERE. Add the file " + s.reference + " to the site to fill this automatically.]"
+  };
+  return TEMPLATE.replace(/\{\{(\w+)\}\}/g, (_, k) => map[k] ?? "");
+}
+async function refresh(){
+  if(!cur) return;
+  const ref = await loadRef(cur);
+  $('#out').value = buildPrompt(cur, ref);
+  const st = $('#status');
+  if(ref === null){ st.className = "status warn"; st.textContent = "Reference file " + cur.reference + " not found, so a paste marker is used."; }
+  else { st.className = "status"; st.textContent = ""; }
+}
+function openDlg(s){
+  cur = s; $('#dSub').textContent = s.name + " · " + s.family;
+  setVoice(false); $('#dlg').showModal(); $('#topic').focus();
+}
+$('#topic').addEventListener('input', refresh); $('#story').addEventListener('change', refresh);
+$('#close').onclick = () => $('#dlg').close();
+$('#dlg').addEventListener('click', e => { if(e.target === $('#dlg')) $('#dlg').close(); });
+
+$('#copy').onclick = async () => {
+  const out = $('#out'), st = $('#status'); await refresh();
+  try{ await navigator.clipboard.writeText(out.value); st.className = "status"; st.textContent = "Copied. Paste it into Claude."; }
+  catch(e){ out.focus(); out.select(); st.className = "status warn"; st.textContent = "Your browser blocked copying. The prompt is selected: press Ctrl+C (or Cmd+C)."; }
+};
+$('#dl').onclick = async () => {
+  await refresh();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([$('#out').value], {type:"text/plain"}));
+  a.download = cur.id + "-prompt.txt"; a.click(); URL.revokeObjectURL(a.href);
+};
+
+renderChips(); renderGrid();
+</script>
+</body>
+</html>
